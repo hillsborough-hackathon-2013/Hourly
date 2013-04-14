@@ -42,7 +42,7 @@ namespace Grandstand.Web.Mvc.Filters
                         Int32 count = context.Users.Count();
                     }
 
-                    WebSecurity.InitializeDatabaseConnection("GrandstandContext",
+                    WebSecurity.InitializeDatabaseConnection("DefaultConnection",
                                          "Users",
                                          "Id",
                                          "UserName",

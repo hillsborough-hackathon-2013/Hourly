@@ -9,18 +9,28 @@ namespace Hourly.Services.Areas.Api.Models
     public class RegisterDto
     {
         /// <summary>
-        /// Gets or sets the usern name
+        /// Gets or sets the first name.
         /// </summary>
-        [Required(ErrorMessage = "The username is a required field.")]
+        public String FirstName { get; set; }
+        /// <summary>
+        /// Gets or sets the last name.
+        /// </summary>
+        public String LastName { get; set; }
+        /// <summary>
+        /// Gets or sets the user name
+        /// </summary>
         public String UserName { get; set; }
         /// <summary>
         /// Gets or sets the password
         /// </summary>
-        [Required(ErrorMessage = "The password is a required field.")]
         public String Password { get; set; }
         /// <summary>
         /// Gets or sets the email address
         /// </summary>
         public String EmailAddress { get; set; }
+        /// <summary>
+        /// Gets or sets the hours needed.
+        /// </summary>
+        public Int32 HoursNeeded { get; set; }
     }
 }

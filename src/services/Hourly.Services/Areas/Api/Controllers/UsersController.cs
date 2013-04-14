@@ -39,7 +39,7 @@ namespace Hourly.Services.Areas.Api.Controllers
             {
                 try
                 {
-                    WebSecurity.CreateUserAndAccount(dto.UserName, dto.Password, new { dto.EmailAddress });
+                    WebSecurity.CreateUserAndAccount(dto.UserName, dto.Password, new { dto.FirstName, dto.LastName, dto.EmailAddress, dto.HoursNeeded });
                     return this.HandleLogin(dto.UserName, dto.Password, rememberMe: false);
                 }
                 catch (MembershipCreateUserException e)
@@ -58,13 +58,15 @@ namespace Hourly.Services.Areas.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         [Authorize]
-        public HttpResponseMessage Projects(Int32 id)
+        public HttpResponseMessage Projects()
         {
             var projects = (from u in context.Users
-                            from p in u.Projects
-                            where u.Id == id
-                            select p.AsProjectSummaryDto())
-                           .ToArray();
+                            where u.UserName == User.Identity.Name
+                            select u)
+                            .SelectMany(u => u.Projects)
+                            .ToArray()
+                            .Select(p => new ProjectSummaryDto(p));
+
 
             return Request.CreateResponse(HttpStatusCode.OK, new { success = true, projects });
         }
@@ -80,8 +82,9 @@ namespace Hourly.Services.Areas.Api.Controllers
 
             var projects = (from p in context.Projects
                             where p.ProjectManager.UserName == userName
-                            select p.AsProjectSummaryDto())
-                           .ToArray();
+                            select p)
+                           .ToArray()
+                           .Select(p => new ProjectSummaryDto(p));
 
             return Request.CreateResponse(HttpStatusCode.OK, new { success = true, projects });
         }

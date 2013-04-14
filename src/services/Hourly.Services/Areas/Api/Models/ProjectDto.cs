@@ -5,6 +5,17 @@ namespace Hourly.Services.Areas.Api.Models
 {
     public class ProjectSummaryDto
     {
+        public ProjectSummaryDto()
+        {
+
+        }
+        public ProjectSummaryDto(Project project)
+        {
+            this.Id = project.Id;
+            this.Description = project.Description;
+            this.ProjectHours = project.ProjectHours;
+            this.RegisteredUserCount = project.Users.Count;
+        }
         /// <summary>
         /// Gets or sets the project id.
         /// </summary>
@@ -25,6 +36,17 @@ namespace Hourly.Services.Areas.Api.Models
 
     public class ProjectDto
     {
+        public ProjectDto()
+        {
+
+        }
+        public ProjectDto(Project project)
+        {
+            this.Id = project.Id;
+            this.Description = project.Description;
+            this.ProjectHours = project.ProjectHours;
+        }
+
         /// <summary>
         /// Gets or sets the project id.
         /// </summary>
@@ -41,26 +63,6 @@ namespace Hourly.Services.Areas.Api.Models
 
     public static class ProjectExtensions
     {
-        public static ProjectSummaryDto AsProjectSummaryDto(this Project project)
-        {
-            return new ProjectSummaryDto
-            {
-                 Id = project.Id,
-                 Description = project.Description,
-                 ProjectHours = project.ProjectHours,
-                 RegisteredUserCount = project.Users.Count,
-            };
-        }
-        public static ProjectDto AsProjectDto(this Project project)
-        {
-            return new ProjectDto
-            {
-                Id = project.Id,
-                Description = project.Description,
-                ProjectHours = project.ProjectHours,
-            };
-        }
-
         public static Project ToEntity(this ProjectDto dto)
         {
             return new Project

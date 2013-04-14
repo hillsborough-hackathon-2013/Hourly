@@ -14,6 +14,19 @@ namespace Hourly.Services.Areas.Api
 
         public override void RegisterArea(AreaRegistrationContext context)
         {
+
+            context.Routes.MapHttpRoute(
+                name: "project-create",
+                routeTemplate: "api/projects/create",
+                defaults: new { controller = "Projects", action = "Create" }
+            );
+
+            context.Routes.MapHttpRoute(
+                name: "project-update",
+                routeTemplate: "api/projects/update",
+                defaults: new { controller = "Projects", action = "Update" }
+            );
+
             context.Routes.MapHttpRoute(
                 name: "project-register-user",
                 routeTemplate: "api/projects/{id}/register",

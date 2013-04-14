@@ -12,7 +12,6 @@ using System.Web.Http;
 
 namespace Hourly.Services.Areas.Api.Controllers
 {
-    [Authorize]
     public class ProjectsController : ApiController
     {
         private HourlyContext context = new HourlyContext();
@@ -22,13 +21,14 @@ namespace Hourly.Services.Areas.Api.Controllers
         /// Lists the projects for a user
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         public IEnumerable<ProjectSummaryDto> Index()
         {
             return (from u in context.Users
-                    where u.UserName == User.Identity.Name
                     select u)
-                    .SelectMany(u => u.Projects)
-                    .Select(p => p.AsProjectSummaryDto());
+                         .SelectMany(u => u.Projects)
+                         .ToArray()
+                         .Select(p => new ProjectSummaryDto(p));
         }
         /// <summary>
         /// Updates the project.
@@ -36,19 +36,18 @@ namespace Hourly.Services.Areas.Api.Controllers
         /// <param name="dto"></param>
         /// <returns></returns>
         [HttpPut]
+        [Authorize]
         public HttpResponseMessage Update(ProjectDto dto)
         {
             if (dto != null)
             {
-                Project project = dto.ToEntity();
-                context.Projects.Attach(project);
-
-                context.Entry(project).State = EntityState.Modified;
-
+                Project project = context.Projects.Find(dto.Id);
+                project.ProjectHours = dto.ProjectHours;
+                project.Description = dto.Description;
                 try
                 {
                     context.SaveChanges();
-                    return Request.CreateResponse(HttpStatusCode.Created, new { successful = true, project = project.AsProjectDto() });
+                    return Request.CreateResponse(HttpStatusCode.OK, new { successful = true, project = new ProjectDto(project) });
                 }
                 catch (DBConcurrencyException)
                 {
@@ -63,6 +62,7 @@ namespace Hourly.Services.Areas.Api.Controllers
         /// <param name="dto"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize]
         public HttpResponseMessage Create(ProjectDto dto)
         {
             String userName = User.Identity.Name;
@@ -71,7 +71,7 @@ namespace Hourly.Services.Areas.Api.Controllers
             {
                 User user = context.Users.Where(u => u.UserName == userName).First();
                 Project project = dto.ToEntity();
-                
+
                 project.ProjectManager = user;
 
                 context.Projects.Add(project);
@@ -79,7 +79,7 @@ namespace Hourly.Services.Areas.Api.Controllers
                 try
                 {
                     context.SaveChanges();
-                    return Request.CreateResponse(HttpStatusCode.OK, new { successful = true, project = project.AsProjectDto() });
+                    return Request.CreateResponse(HttpStatusCode.OK, new { successful = true, project = new ProjectDto(project) });
                 }
                 catch (DBConcurrencyException)
                 {
@@ -96,6 +96,7 @@ namespace Hourly.Services.Areas.Api.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
+
         public HttpResponseMessage Index(Int32 id)
         {
             Project project = (from p in context.Projects
@@ -106,7 +107,7 @@ namespace Hourly.Services.Areas.Api.Controllers
 
             if (project != null)
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new { success = true, project = project.AsProjectDto() });
+                return Request.CreateResponse(HttpStatusCode.OK, new { success = true, project = new ProjectDto(project) });
             }
 
             return Request.CreateResponse(HttpStatusCode.NotFound, new { error = "Either the project was not found or you do not have access to it." });
@@ -117,12 +118,13 @@ namespace Hourly.Services.Areas.Api.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
+        [HttpGet]
+        [Authorize]
         public HttpResponseMessage Register(Int32 id)
         {
             String userName = User.Identity.Name;
 
             Project project = (from p in context.Projects
-                               from u in p.Users
                                where p.Id == id
                                select p)
                               .FirstOrDefault();
@@ -141,7 +143,7 @@ namespace Hourly.Services.Areas.Api.Controllers
                         project.Users.Add(user);
                         context.SaveChanges();
 
-                        return Request.CreateResponse(HttpStatusCode.OK, new { successful = true, project = project.AsProjectDto() });
+                        return Request.CreateResponse(HttpStatusCode.OK, new { successful = true, project = new ProjectDto(project) });
                     }
                     catch (DbUpdateConcurrencyException e)
                     {
@@ -152,7 +154,7 @@ namespace Hourly.Services.Areas.Api.Controllers
 
             return Request.CreateResponse(HttpStatusCode.NotFound);
         }
-
+        [Authorize]
         public HttpResponseMessage UnRegister(Int32 id)
         {
             String userName = User.Identity.Name;
@@ -177,7 +179,7 @@ namespace Hourly.Services.Areas.Api.Controllers
                         project.Users.Remove(user);
                         context.SaveChanges();
 
-                        return Request.CreateResponse(HttpStatusCode.OK, new { successful = true, project = project.AsProjectDto() });
+                        return Request.CreateResponse(HttpStatusCode.OK, new { successful = true, project = new ProjectDto(project) });
                     }
                     catch (DbUpdateConcurrencyException e)
                     {
@@ -187,6 +189,12 @@ namespace Hourly.Services.Areas.Api.Controllers
             }
 
             return Request.CreateResponse(HttpStatusCode.NotFound);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            context.Dispose();
+            base.Dispose(disposing);
         }
     }
 }
