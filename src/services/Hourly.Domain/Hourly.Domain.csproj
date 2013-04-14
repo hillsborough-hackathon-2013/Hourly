@@ -48,6 +48,7 @@
     <Compile Include="HourlyContext.cs" />
     <Compile Include="Maps\ProjectsMap.cs" />
     <Compile Include="Maps\UserMap.cs" />
+    <Compile Include="Maps\UserProjectsMap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,5 @@
 ﻿using Grandstand.Web.Mvc.Filters;
+using Hourly.Domain;
 using Hourly.Services.Areas.Api.Models;
 using System;
 using System.Collections.Generic;
@@ -14,38 +15,23 @@ namespace Hourly.Services.Areas.Api.Controllers
     [InitializeSimpleMembership]
     public class UsersController : ApiController
     {
-        // GET api/users
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
+        private HourlyContext context = new HourlyContext();
 
-        // GET api/users/5
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/users
-        public void Post([FromBody]string value)
-        {
-        }
-
-        // PUT api/users/5
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE api/users/5
-        public void Delete(int id)
-        {
-        }
-
+        /// <summary>
+        /// Logs in the user.
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost]
         public HttpResponseMessage Login(LoginDto dto)
         {
             return this.HandleLogin(dto.UserName, dto.Password, dto.RememberMe);
         }
+        /// <summary>
+        /// Registers a user.
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost]
         public HttpResponseMessage Register(RegisterDto dto)
         {
@@ -65,26 +51,66 @@ namespace Hourly.Services.Areas.Api.Controllers
             // If we got this far, something failed
             return Request.CreateResponse<Object>(HttpStatusCode.BadRequest, new { errors = GetErrorsFromModelState() });
         }
-
-        #region Private Members
-        private HttpResponseMessage HandleLogin(String userName, String password, Boolean rememberMe)
+        /// <summary>
+        /// Gets projects that are registered for a user.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Authorize]
+        public HttpResponseMessage Projects(Int32 id)
         {
-            if (ModelState.IsValid)
-            {
-                if (WebSecurity.Login(userName, password, rememberMe))
-                {
-                    UserDto user = new UserDto();
-                    user.UserName = userName;
-                    return Request.CreateResponse(HttpStatusCode.OK, new { success = true, user });
-                }
-                else
-                {
-                    ModelState.AddModelError("", "The user name or password provided is incorrect.");
-                }
-            }
-            // If we got this far, something failed
-            return Request.CreateResponse<Object>(HttpStatusCode.Unauthorized, new { errors = GetErrorsFromModelState() });
+            var projects = (from u in context.Users
+                            from p in u.Projects
+                            where u.Id == id
+                            select p.AsProjectSummaryDto())
+                           .ToArray();
+
+            return Request.CreateResponse(HttpStatusCode.OK, new { success = true, projects });
         }
+        /// <summary>
+        /// Gets or sets the projects that a user is managing
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Authorize]
+        public HttpResponseMessage MyProjects()
+        {
+            String userName = User.Identity.Name;
+
+            var projects = (from p in context.Projects
+                            where p.ProjectManager.UserName == userName
+                            select p.AsProjectSummaryDto())
+                           .ToArray();
+
+            return Request.CreateResponse(HttpStatusCode.OK, new { success = true, projects });
+        }
+        /// <summary>
+        /// Searches users using the specified keyword.
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public HttpResponseMessage Search(String keyword)
+        {
+            var users = from u in context.Users
+                        where u.UserName.Contains(keyword) ||
+                              u.FirstName.Contains(keyword) ||
+                              u.LastName.Contains(keyword) ||
+                              u.EmailAddress.Contains(keyword)
+                        select u.AsUserDto();
+
+            return Request.CreateResponse(HttpStatusCode.OK, new { success = true, users });
+        }
+
+        /// <summary>
+        /// Not applicable.
+        /// </summary>
+        [HttpGet]
+        public void Test()
+        {
+        }
+        
+        #region Private Members
         private IEnumerable<String> GetErrorsFromModelState()
         {
             return ModelState.SelectMany(x => x.Value.Errors.Select(error => error.ErrorMessage));
@@ -117,6 +143,25 @@ namespace Hourly.Services.Areas.Api.Controllers
                     return "An unknown error occurred. Please verify your entry and try again. If the problem persists, please contact your system administrator.";
             }
         }
+        private HttpResponseMessage HandleLogin(String userName, String password, Boolean rememberMe)
+        {
+            if (ModelState.IsValid)
+            {
+                if (WebSecurity.Login(userName, password, rememberMe))
+                {
+                    UserDto user = new UserDto();
+                    user.UserName = userName;
+                    return Request.CreateResponse(HttpStatusCode.OK, new { success = true, user });
+                }
+                else
+                {
+                    ModelState.AddModelError("", "The user name or password provided is incorrect.");
+                }
+            }
+            // If we got this far, something failed
+            return Request.CreateResponse<Object>(HttpStatusCode.Unauthorized, new { errors = GetErrorsFromModelState() });
+        }
+
         #endregion
     }
 }

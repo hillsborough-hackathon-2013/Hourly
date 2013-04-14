@@ -18,11 +18,13 @@ namespace Hourly.Domain
         /// <summary>
         /// Gets or sets the DbSet that represents a <see cref="Project"/>.
         /// </summary>
-        //public DbSet<Project> Projects { get; set; }
+        public DbSet<Project> Projects { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             UserMap.Map(modelBuilder);
+            ProjectsMap.Map(modelBuilder);
+            UserProjectsMap.Map(modelBuilder);
         }
     }
 }

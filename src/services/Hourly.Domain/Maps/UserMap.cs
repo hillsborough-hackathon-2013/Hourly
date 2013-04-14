@@ -25,6 +25,20 @@ namespace Hourly.Domain.Maps
                 .HasMaxLength(56)
                 .IsRequired();
 
+            modelBuilder.Entity<User>()
+                .Property(m => m.FirstName)
+                .HasMaxLength(56)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .Property(m => m.LastName)
+                .HasMaxLength(56)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .Property(m => m.HoursNeeded)
+                .IsOptional();
+
             modelBuilder.Entity<User>().ToTable("Users");
         }
     }
